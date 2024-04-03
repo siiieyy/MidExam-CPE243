@@ -1,0 +1,57 @@
+---
+- name: Setup firewall on Ubuntu and CentOS
+  hosts: remote
+  become: true
+  vars:
+    ubuntu_firewall_package: ufw
+    centos_firewall_package: firewalld
+  tasks:
+    - name: Install firewall package on Ubuntu
+      apt:
+        name: "{{ ubuntu_firewall_package }}"
+        state: present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Install firewall package on CentOS
+      yum:
+        name: "{{ centos_firewall_package }}"
+        state: present
+      when: ansible_distribution == 'CentOS'
+
+    - name: Enable firewall on Ubuntu
+      service:
+        name: ufw
+        state: started
+        enabled: true
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Enable firewall on CentOS
+      service:
+        name: firewalld
+        state: started
+        enabled: true
+      when: ansible_distribution == 'CentOS'
+
+    # Add rules as needed for your firewall setup
+    - name: Allow SSH on Ubuntu
+      ufw:
+        rule: allow
+        port: ssh
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Allow SSH on CentOS
+      command:
+        cmd: firewall-cmd --zone=public --add-service=ssh --permanent
+      when: ansible_distribution == 'CentOS'
+
+    # Reload firewall rules to apply changes
+    - name: Reload firewall rules on Ubuntu
+      command:
+        cmd: ufw reload
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Reload firewall rules on CentOS
+      command:
+        cmd: firewall-cmd --reload
+      when: ansible_distribution == 'CentOS'
+
